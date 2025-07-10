@@ -1,90 +1,228 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>압력 단위 변환기 (mb → mmHg)</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f4f4f4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    .converter {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    label, select, input {
-      display: block;
-      width: 100%;
-      margin-bottom: 15px;
-      font-size: 1rem;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 1.1rem;
-      background: #007aff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 20px;
-      font-weight: bold;
-      font-size: 1.2rem;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>압력 단위 변환기 및 5014i 필터값 계산</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items to the start to allow scrolling if content is long */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px; /* Increased max-width to accommodate two sections */
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Space between sections */
+        }
+        .card {
+            background-color: #f9fafb;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #1f2937;
+            background-color: #ffffff;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .button {
+            padding: 12px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        .button:active {
+            transform: translateY(0);
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e0f2fe;
+            border: 1px solid #90cdf4;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0c4a6e;
+            text-align: center;
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row; /* Side-by-side on larger screens */
+                justify-content: space-between;
+            }
+            .card {
+                flex: 1; /* Each card takes equal width */
+                min-width: 350px; /* Ensure cards don't get too small */
+            }
+            .button {
+                width: auto; /* Buttons can be auto-width on desktop */
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>압력 단위 변환기</h1>
-  <div class="converter">
-    <label for="pressureInput">압력 값 (mb):</label>
-    <input type="number" id="pressureInput" placeholder="예: 1013.25" />
+    <div class="container">
+        <!-- 압력 단위 변환기 (기존 기능) -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">압력 단위 변환기 (mb → mmHg)</h2>
+            <div class="input-group">
+                <label for="mbInput">밀리바 (mb)</label>
+                <input type="number" id="mbInput" placeholder="밀리바 값을 입력하세요" step="any">
+                <p id="mbError" class="error-message"></p>
+            </div>
+            <button class="button" onclick="convertPressure()">변환하기</button>
+            <div class="result-box">
+                <p>결과: <span id="mmhgResult">0.00</span> mmHg</p>
+            </div>
+        </div>
 
-    <label for="targetUnit">변환 단위 선택:</label>
-    <select id="targetUnit">
-      <option value="mmHg">mmHg</option>
-    </select>
+        <!-- 5014i 필터값 계산 (새로운 기능) -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">5014i 필터값계산</h2>
+            <div class="input-group">
+                <label for="referenceValue">기준값 (a) (µg)</label>
+                <input type="number" id="referenceValue" placeholder="기준값을 입력하세요 (마이크로그램)" step="any">
+                <p id="referenceValueError" class="error-message"></p>
+            </div>
+            <div class="input-group">
+                <label for="inputValue">입력값 (b) (%)</label>
+                <input type="number" id="inputValue" placeholder="오차율을 입력하세요 (%)" step="any">
+                <p id="inputValueError" class="error-message"></p>
+            </div>
+            <button class="button" onclick="calculateErrorValue()">계산하기</button>
+            <div class="result-box">
+                <p>계산값 (c): <span id="calculatedResult">0</span> µg</p>
+            </div>
+        </div>
+    </div>
 
-    <button onclick="convertPressure()">변환하기</button>
+    <script>
+        // 압력 단위 변환 함수 (mb -> mmHg)
+        function convertPressure() {
+            const mbInput = document.getElementById('mbInput');
+            const mmhgResult = document.getElementById('mmhgResult');
+            const mbError = document.getElementById('mbError');
 
-    <div class="result" id="result"></div>
-  </div>
+            const mbValue = parseFloat(mbInput.value);
 
-  <script>
-    function convertPressure() {
-      const mb = parseFloat(document.getElementById("pressureInput").value);
-      const targetUnit = document.getElementById("targetUnit").value;
-      let result = '';
+            // 입력 유효성 검사
+            if (isNaN(mbValue) || mbValue < 0) {
+                mbError.textContent = "유효한 양의 밀리바 값을 입력해주세요.";
+                mmhgResult.textContent = "0.00";
+                return;
+            } else {
+                mbError.textContent = ""; // 에러 메시지 초기화
+            }
 
-      if (isNaN(mb)) {
-        result = "압력 값을 입력하세요.";
-      } else {
-        if (targetUnit === "mmHg") {
-          // mb -> kPa = mb * 0.1, kPa -> mmHg = * 7.50062
-          const mmHg = mb * 0.1 * 7.50062;
-          result = `${mb} mb = ${mmHg.toFixed(2)} mmHg`;
-        } else {
-          result = "지원되지 않는 단위입니다.";
+            // 변환 공식: 1 mb ≈ 0.750062 mmHg
+            const conversionFactor = 0.750062;
+            const mmhgValue = mbValue * conversionFactor;
+
+            mmhgResult.textContent = mmhgValue.toFixed(3); // 소수점 3째 자리까지 표시
         }
-      }
 
-      document.getElementById("result").textContent = result;
-    }
-  </script>
+        // 오차 계산 함수
+        function calculateErrorValue() {
+            const referenceValueInput = document.getElementById('referenceValue');
+            const inputValueInput = document.getElementById('inputValue');
+            const calculatedResultSpan = document.getElementById('calculatedResult');
+            const referenceValueError = document.getElementById('referenceValueError');
+            const inputValueError = document.getElementById('inputValueError');
+
+            const a = parseFloat(referenceValueInput.value); // 기준값 (마이크로그램)
+            const b = parseFloat(inputValueInput.value);     // 입력값 (오차율 %)
+
+            let isValid = true;
+
+            // 기준값 (a) 유효성 검사
+            if (isNaN(a) || a < 0) {
+                referenceValueError.textContent = "유효한 양의 기준값을 입력해주세요.";
+                isValid = false;
+            } else {
+                referenceValueError.textContent = "";
+            }
+
+            // 입력값 (b) 유효성 검사
+            if (isNaN(b)) {
+                inputValueError.textContent = "유효한 오차율을 입력해주세요.";
+                isValid = false;
+            } else {
+                inputValueError.textContent = "";
+            }
+
+            if (!isValid) {
+                calculatedResultSpan.textContent = "0"; // 정수로 표시
+                return;
+            }
+
+            let c; // 결과값
+
+            if (b > 0) {
+                c = a - a * Math.abs(b / 100);
+            } else if (b < 0) {
+                c = a + a * Math.abs(b / 100);
+            } else { // b가 0인 경우
+                c = a;
+            }
+
+            calculatedResultSpan.textContent = Math.round(c); // 정수로 반올림하여 표시
+        }
+
+        // 페이지 로드 시 초기값 설정 (선택 사항)
+        window.onload = function() {
+            document.getElementById('mbInput').value = '1013.25'; // 대기압 기본값
+            convertPressure(); // 초기 변환 실행
+        };
+    </script>
 </body>
 </html>
